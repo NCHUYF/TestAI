@@ -25,8 +25,6 @@ public class Dog : Agent
     {
         sensor.AddObservation(transform.localPosition);
         sensor.AddObservation(_target.transform.localPosition);
-        sensor.AddObservation(_rigidbody.velocity.x);
-        sensor.AddObservation(_rigidbody.velocity.z);
     }
 
     /// <summary>
@@ -39,21 +37,14 @@ public class Dog : Agent
         dir.x = vectorAction[0];
         dir.z = vectorAction[1];
         _rigidbody.velocity = dir * _moveSpeed;
-        stepCount++; // 每一个行动时增加步数
 
         // 碰到目标
         if (Vector3.Distance(transform.localPosition, _target.transform.localPosition) < 1f)
         {
-            SetReward(CalculateReward());
+            SetReward(1f);
             _plane.GetComponent<Renderer>().material = _matWin;
             EndEpisode();
         }
-    }
-
-    private float CalculateReward()
-    {
-        float reward = 1f - (float)stepCount / MaxStep;
-        return Mathf.Clamp(reward, 0f, 1f); // 限制奖励在0和1之间
     }
 
     private void OnCollisionEnter(Collision collision)
@@ -86,7 +77,6 @@ public class Dog : Agent
 
     private void Reset()
     {
-        stepCount = 0; // 每一个新的Episode开始时重置步数
         ResetTarget();
     }
 
@@ -111,5 +101,4 @@ public class Dog : Agent
     private Rigidbody _rigidbody;
     [SerializeField]
     private float _moveSpeed = 10;
-    private int stepCount = 0; // 用来记录步数的变量
 }
