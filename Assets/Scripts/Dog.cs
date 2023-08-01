@@ -23,8 +23,8 @@ public class Dog : Agent
     /// <param name="sensor"></param>
     public override void CollectObservations(VectorSensor sensor)
     {
-        sensor.AddObservation(transform.position);
-        sensor.AddObservation(_target.transform.position);
+        sensor.AddObservation(transform.localPosition);
+        sensor.AddObservation(_target.transform.localPosition);
         sensor.AddObservation(_rigidbody.velocity.x);
         sensor.AddObservation(_rigidbody.velocity.z);
     }
@@ -38,22 +38,34 @@ public class Dog : Agent
         Vector3 dir = Vector3.zero;
         dir.x = vectorAction[0];
         dir.z = vectorAction[1];
-        _rigidbody.AddForce(dir * _moveSpeed);
+        _rigidbody.velocity = dir * _moveSpeed;
+        stepCount++; // 每一个行动时增加步数
 
         // 碰到目标
-        if (Vector3.Distance(transform.position, _target.transform.position) < 1f)
+        if (Vector3.Distance(transform.localPosition, _target.transform.localPosition) < 1f)
         {
-            SetReward(1f);
+            SetReward(CalculateReward());
+            _plane.GetComponent<Renderer>().material = _matWin;
             EndEpisode();
         }
+    }
 
+    private float CalculateReward()
+    {
+        float reward = 1f - (float)stepCount / MaxStep;
+        return Mathf.Clamp(reward, 0f, 1f); // 限制奖励在0和1之间
+    }
+
+    private void OnCollisionEnter(Collision collision)
+    {
         // 出界
-        if (transform.position.y < -0.5f)
+        if (collision.gameObject.name.Equals("Wall"))
         {
+            SetReward(-1f);
+            _plane.GetComponent<Renderer>().material = _matLose;
             ResetPosition();
             EndEpisode();
         }
-
     }
 
     /// <summary>
@@ -72,34 +84,32 @@ public class Dog : Agent
         _rigidbody = GetComponent<Rigidbody>();
     }
 
-    private void FixedUpdate()
-    {
-        _timer -= Time.fixedDeltaTime;
-        //DebugGUI.AddDebugItem("注意",$"距离下一轮剩余{_timer.ToString("f1")}秒");
-    }
-
     private void Reset()
     {
-        _timer = MaxStep / 60f;
+        stepCount = 0; // 每一个新的Episode开始时重置步数
         ResetTarget();
     }
 
     void ResetTarget()
     {
-        _target.transform.position = new Vector3(Random.Range(-5f, 5f), 0, Random.Range(-5f, 5f));
+        _target.transform.localPosition = new Vector3(Random.Range(-5f, 5f), 0, Random.Range(-5f, 5f));
     }
 
     void ResetPosition()
     {
-        transform.position = Vector3.zero;
+        transform.localPosition = Vector3.zero;
         transform.eulerAngles = Vector3.zero;
         _rigidbody.velocity = Vector3.zero;
         _rigidbody.angularVelocity = Vector3.zero;
     }
 
     public Transform _target; // 目标
+    public Material _matWin;
+    public Material _matLose;
+    public Transform _plane;
 
     private Rigidbody _rigidbody;
+    [SerializeField]
     private float _moveSpeed = 10;
-    private float _timer = 0;
+    private int stepCount = 0; // 用来记录步数的变量
 }
