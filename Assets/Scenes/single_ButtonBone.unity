@@ -356,5 +356,10 @@ PrefabInstance:
       propertyPath: m_BehaviorType
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 6923914464304779595, guid: 359afe1bd247bd64b8ea137c7a95775f,
+        type: 3}
+      propertyPath: m_Model
+      value: 
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 359afe1bd247bd64b8ea137c7a95775f, type: 3}

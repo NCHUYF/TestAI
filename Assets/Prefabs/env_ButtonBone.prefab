@@ -833,7 +833,7 @@ MonoBehaviour:
   agentParameters:
     maxStep: 0
   hasUpgradedFromAgentParameters: 1
-  MaxStep: 2000
+  MaxStep: 1000
   _target: {fileID: 6923914463813744414}
   _button: {fileID: 3615356894069330992}
   _isTrigger: 0

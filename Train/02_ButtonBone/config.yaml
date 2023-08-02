@@ -2,8 +2,8 @@ behaviors:
   ButtonBone:
     trainer_type: ppo
     hyperparameters:
-      batch_size: 64
-      buffer_size: 12000
+      batch_size: 256
+      buffer_size: 1024
       learning_rate: 0.0003
       beta: 0.001
       epsilon: 0.2
@@ -11,10 +11,9 @@ behaviors:
       num_epoch: 3
       learning_rate_schedule: linear
     network_settings:
-      normalize: true
+      normalize: false
       hidden_units: 128
       num_layers: 2
-      vis_encode_type: simple
     reward_signals:
       extrinsic:
         gamma: 0.99
@@ -26,7 +25,7 @@ behaviors:
       strength: 0.5
       demo_path: demoButtonBone.demo
     keep_checkpoints: 5
-    max_steps: 1000000
-    time_horizon: 1000
-    summary_freq: 1000
+    max_steps: 5000000
+    time_horizon: 64
+    summary_freq: 20000
     threaded: true

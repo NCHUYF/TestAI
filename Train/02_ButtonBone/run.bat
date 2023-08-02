@@ -25,17 +25,32 @@ if "%train_id%"=="" set train_id=%DEFAULT_ID%
 
 :: 检查训练ID是否存在
 if exist .\results\%train_id%\*.* goto id_exists
-
-goto start_new_training
+goto ask_tensorboard
 
 :id_exists
-:confirm_continue
 echo 训练ID已存在。
 echo 是否继续训练？(Y/N)
 set /p continue_choice=
-if /i "%continue_choice%"=="Y" goto start_training
+if /i "%continue_choice%"=="Y" goto ask_tensorboard
 if /i "%continue_choice%"=="N" goto enter_id
-goto confirm_continue
+goto id_exists
+
+:ask_tensorboard
+echo 是否开启可视化界面？(Y/N)
+set /p tensorboard_choice=
+if /i "%tensorboard_choice%"=="Y" goto start_tensorboard
+if /i "%tensorboard_choice%"=="N" goto start_training_based_on_choice
+goto ask_tensorboard
+
+:start_tensorboard
+:: 开启 TensorBoard
+start /min cmd /C tensorboard --logdir results
+timeout /t 3 /nobreak >NUL
+start http://localhost:6006
+
+:start_training_based_on_choice
+if exist .\results\%train_id%\*.* goto start_training
+goto start_new_training
 
 :start_new_training
 echo 开始新训练...

@@ -47,25 +47,13 @@ public class ButtonBoneAgent : Agent
         float distanceToButton = Vector3.Distance(transform.localPosition, _button.localPosition);
         float distanceToTarget = Vector3.Distance(transform.localPosition, _target.transform.localPosition);
 
-        // 接近按钮的奖励
-        if (!_isTrigger)
-        {
-            AddReward(-distanceToButton / MaxStep);
-        }
-
         // 按下按钮
-        if (distanceToButton < 1f && Mathf.RoundToInt(vectorAction[2]) == 1)
+        if (distanceToButton < 1f && Mathf.RoundToInt(vectorAction[2]) == 1 && !_isTrigger)
         {
             AddReward(1f);
             _isTrigger = true;
             _button.GetComponentInChildren<Renderer>().material = _matWin;
             _target.gameObject.SetActive(true);
-        }
-
-        // 接近骨头的奖励
-        if (_isTrigger)
-        {
-            AddReward(-distanceToTarget / MaxStep);
         }
 
         // 时间惩罚
