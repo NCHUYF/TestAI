@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Unity.MLAgents;
 using Unity.MLAgents.Sensors;
+using System;
 
 public class ButtonBoneAgent : Agent
 {
@@ -13,9 +14,12 @@ public class ButtonBoneAgent : Agent
     public override void OnEpisodeBegin()
     {
         base.OnEpisodeBegin();
-        Reset();
+        ResetButton();
+
+        transform.eulerAngles = Vector3.zero;
+        _rigidbody.velocity = Vector3.zero;
+        _rigidbody.angularVelocity = Vector3.zero;
     }
-    int nOnEpisodeBeginTimes = 0;
 
     /// <summary>
     /// 收集观察结果
@@ -23,13 +27,22 @@ public class ButtonBoneAgent : Agent
     /// <param name="sensor"></param>
     public override void CollectObservations(VectorSensor sensor)
     {
+        var targetDir = (_target.transform.localPosition - transform.localPosition).normalized;
+        var canPress = CanPress();
+
         sensor.AddObservation(_isTrigger);
-        sensor.AddObservation(transform.localPosition);
-        if (_target.gameObject.activeSelf)
-            sensor.AddObservation(_target.transform.localPosition);
-        else
-            sensor.AddObservation(Vector3.zero);
-        sensor.AddObservation(_button.transform.localPosition);
+        sensor.AddObservation(canPress);
+        sensor.AddObservation(transform.localPosition.x);
+        sensor.AddObservation(transform.localPosition.z);
+        sensor.AddObservation(targetDir.x);
+        sensor.AddObservation(targetDir.z);
+        sensor.AddObservation(_button.transform.localPosition.x);
+        sensor.AddObservation(_button.transform.localPosition.z);
+    }
+
+    private bool CanPress()
+    {
+        return Vector3.Distance(transform.localPosition, _button.localPosition) < 1f && !_isTrigger;
     }
 
     /// <summary>
@@ -44,11 +57,8 @@ public class ButtonBoneAgent : Agent
 
         _rigidbody.velocity = dir * _moveSpeed;
 
-        float distanceToButton = Vector3.Distance(transform.localPosition, _button.localPosition);
-        float distanceToTarget = Vector3.Distance(transform.localPosition, _target.transform.localPosition);
-
         // 按下按钮
-        if (distanceToButton < 1f && Mathf.RoundToInt(vectorAction[2]) == 1 && !_isTrigger)
+        if (CanPress() && Mathf.RoundToInt(vectorAction[2]) == 1)
         {
             AddReward(1f);
             _isTrigger = true;
@@ -56,8 +66,23 @@ public class ButtonBoneAgent : Agent
             _target.gameObject.SetActive(true);
         }
 
+        // 吃到目标
+        var disToTarget = Vector3.Distance(transform.localPosition, _target.transform.localPosition);
+        if (_isTrigger && disToTarget < 1f)
+        {
+            AddReward(1f);
+            _plane.GetComponent<Renderer>().material = _matWin;
+            ResetButton();
+        }
+
+        // 鼓励去找目标
+        if(_isTrigger)
+        {
+            AddReward(-0.001f * disToTarget);
+        }
+
         // 时间惩罚
-        AddReward(-0.1f / MaxStep);
+        AddReward(-0.01f / MaxStep);
     }
 
 
@@ -69,17 +94,6 @@ public class ButtonBoneAgent : Agent
             AddReward(-1f);
             _plane.GetComponent<Renderer>().material = _matLose;
             ResetPosition();
-            EndEpisode();
-        }
-    }
-
-    private void OnTriggerEnter(Collider other)
-    {
-        // 碰到目标
-        if(other.transform == _target)
-        {
-            AddReward(1f);
-            _plane.GetComponent<Renderer>().material = _matWin;
             EndEpisode();
         }
     }
@@ -102,27 +116,18 @@ public class ButtonBoneAgent : Agent
         _rigidbody = GetComponent<Rigidbody>();
     }
 
-    private void Reset()
+    void ResetButton()
     {
-        ResetTarget();
-
+        _button.transform.localPosition = new Vector3(UnityEngine.Random.Range(-5f, 5f), 0, UnityEngine.Random.Range(-5f, 5f));
+        _target.transform.localPosition = new Vector3(UnityEngine.Random.Range(-5f, 5f), 0, UnityEngine.Random.Range(-5f, 5f));
         _isTrigger = false;
-        _button.GetComponentInChildren<Renderer>().material = _matLose;
         _target.gameObject.SetActive(false);
-    }
-
-    void ResetTarget()
-    {
-        _button.transform.localPosition = new Vector3(Random.Range(-5f, 5f), 0, Random.Range(-5f, 5f));
-        _target.transform.localPosition = new Vector3(Random.Range(-5f, 5f), 0, Random.Range(-5f, 5f));
+        _button.GetComponentInChildren<Renderer>().material = _matLose;
     }
 
     void ResetPosition()
     {
         transform.localPosition = Vector3.zero;
-        transform.eulerAngles = Vector3.zero;
-        _rigidbody.velocity = Vector3.zero;
-        _rigidbody.angularVelocity = Vector3.zero;
     }
 
     public Transform _target; // 目标

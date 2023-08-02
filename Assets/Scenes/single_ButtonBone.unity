@@ -360,6 +360,7 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Model
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 11400000, guid: 4d241242cfeccbe439ec74d493e57d95,
+        type: 3}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 359afe1bd247bd64b8ea137c7a95775f, type: 3}
