@@ -51,9 +51,20 @@ public class FlappyDogAgent : Agent
         {
             AddReward(-1f);
             _plane.GetComponent<Renderer>().material = _matLose;
+            Invoke("ChangeMaterial", 2f);
             ResetPosition();
             EndEpisode();
         }
+
+        if (collision.gameObject.CompareTag("Obstacle"))
+        {
+            AddReward(-0.1f);
+        }
+    }
+
+    private void ChangeMaterial()
+    {
+        _plane.GetComponent<Renderer>().material = _matWin;
     }
 
     /// <summary>
@@ -79,6 +90,7 @@ public class FlappyDogAgent : Agent
         _rigidbody.angularVelocity = Vector3.zero;
 
         ResetPosition();
+        _spawner.Reset();
     }
 
     void ResetPosition()
@@ -89,7 +101,7 @@ public class FlappyDogAgent : Agent
     public Material _matWin;
     public Material _matLose;
     public Transform _plane;
-
+    public ObstacleSpawner _spawner;
     private Rigidbody _rigidbody;
     [SerializeField]
     private float _moveSpeed = 3;
