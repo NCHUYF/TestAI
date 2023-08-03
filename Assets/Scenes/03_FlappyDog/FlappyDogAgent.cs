@@ -4,6 +4,7 @@ using UnityEngine;
 using Unity.MLAgents;
 using Unity.MLAgents.Sensors;
 using System;
+using TMPro;
 
 public class FlappyDogAgent : Agent
 {
@@ -26,6 +27,10 @@ public class FlappyDogAgent : Agent
     {
         sensor.AddObservation(transform.localPosition.x);
         sensor.AddObservation(transform.localPosition.z);
+        sensor.AddObservation(_target.transform.localPosition.x);
+        sensor.AddObservation(_target.transform.localPosition.z);
+        sensor.AddObservation(_timer);
+        sensor.AddObservation(_spawner.diffRate);
     }
 
     /// <summary>
@@ -38,10 +43,19 @@ public class FlappyDogAgent : Agent
         dir.x = vectorAction[0] - 1;
         dir.z = vectorAction[1] - 1;
 
-        _rigidbody.velocity = dir * _moveSpeed;
+        _rigidbody.velocity = dir * _moveSpeed * _spawner.diffRate;
 
+        var disToTarget = Vector3.Distance(transform.localPosition, _target.transform.localPosition);
+        // 吃掉目标
+        if (disToTarget < 1)
+        {
+            AddReward(1f);
+            ResetTarget();
+        }
+
+        // 鼓励找目标
         // 时间奖励
-        AddReward(0.02f);
+        AddReward(0.001f * (_timer - disToTarget));
     }
 
     private void OnCollisionEnter(Collision collision)
@@ -56,9 +70,11 @@ public class FlappyDogAgent : Agent
             EndEpisode();
         }
 
+        // 碰到障碍物
         if (collision.gameObject.CompareTag("Obstacle"))
         {
-            AddReward(-0.1f);
+            AddReward(-1f);
+            EndEpisode();
         }
     }
 
@@ -83,6 +99,16 @@ public class FlappyDogAgent : Agent
         _rigidbody = GetComponent<Rigidbody>();
     }
 
+    private void Update()
+    {
+        _timer -= Time.deltaTime;
+        _timerText.text = Mathf.RoundToInt(_timer).ToString();
+        if(_timer <= 0)
+        {
+            Reset();
+        }
+    }
+
     private void Reset()
     {
         transform.eulerAngles = Vector3.zero;
@@ -90,6 +116,7 @@ public class FlappyDogAgent : Agent
         _rigidbody.angularVelocity = Vector3.zero;
 
         ResetPosition();
+        ResetTarget();
         _spawner.Reset();
     }
 
@@ -98,10 +125,19 @@ public class FlappyDogAgent : Agent
         transform.localPosition = Vector3.zero;
     }
 
+    void ResetTarget()
+    {
+        _target.transform.localPosition = new Vector3(UnityEngine.Random.Range(-5f, 5f), 0, UnityEngine.Random.Range(-5f, 5f));
+        _timer = 20f;
+    }
+
     public Material _matWin;
     public Material _matLose;
     public Transform _plane;
     public ObstacleSpawner _spawner;
+    public Transform _target; // 目标
+    public TextMeshPro _timerText;
+    private float _timer = 20;
     private Rigidbody _rigidbody;
     [SerializeField]
     private float _moveSpeed = 3;

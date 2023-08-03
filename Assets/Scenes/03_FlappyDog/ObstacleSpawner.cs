@@ -12,17 +12,21 @@ public class ObstacleSpawner : MonoBehaviour
     public Transform endX; // X轴结束范围
     public Transform ClipMinX; // X轴最小剪切范围
     public Transform ClipMaxX; // X轴最大剪切范围
-    public float speed = 1f; // 障碍物移动速度
+    public TextMeshPro _scoreText; // 分数
+    public float startSpeed = 1f; // 障碍物移动速度
     public float spawnRate = 5f; // 初始生成频率
     public float difficultyIncreaseTime = 5; // 难度增加的时间间隔
-    public float maxSpawnRate = 5f; // 最大生成频率
     public float maxXOffset = 10f; // 最大的X偏移量
 
-
+    public float speed; // 障碍物移动速度
+    public float curSpawnRate; // 初始生成频率
     private List<GameObject> obstacles; // 障碍物列表
     private float nextSpawnTime = 0f; // 下次生成的时间
     private float timer = 0f; // 计时器
+    private float score = 0f; // 分数
     private float currentXOffset; // 当前X偏移量
+    private float maxScore = 0f;
+    public float diffRate = 1f; // 困难指数
 
     private void Start()
     {
@@ -39,7 +43,7 @@ public class ObstacleSpawner : MonoBehaviour
             SpawnObstacle();
 
             // 更新下次生成的时间
-            nextSpawnTime = Time.time + spawnRate;
+            nextSpawnTime = Time.time + curSpawnRate;
         }
 
         // 移动障碍物并检查是否达到endZ
@@ -81,6 +85,7 @@ public class ObstacleSpawner : MonoBehaviour
             if (hull == null) continue;
             GameObject lower = hull.CreateLowerHull(sub.gameObject, sub.GetComponent<MeshRenderer>().material);
             lower.AddComponent<BoxCollider>();
+            lower.tag = sub.tag;
             lower.transform.SetParent(obstacle.transform, false); // 将新物体设置为障碍物的子对象
             Destroy(sub.gameObject);
         }
@@ -90,6 +95,7 @@ public class ObstacleSpawner : MonoBehaviour
             if (hull == null) continue;
             GameObject lower = hull.CreateLowerHull(sub.gameObject, sub.GetComponent<MeshRenderer>().material);
             lower.AddComponent<BoxCollider>();
+            lower.tag = sub.tag;
             lower.transform.SetParent(obstacle.transform, false); // 将新物体设置为障碍物的子对象
             Destroy(sub.gameObject);
         }
@@ -116,12 +122,16 @@ public class ObstacleSpawner : MonoBehaviour
     void IncreaseDifficulty()
     {
         timer += Time.deltaTime;
+        score += Time.deltaTime;
+        maxScore = Mathf.Max(maxScore, score);
+        _scoreText.text = $"{Mathf.RoundToInt(score)}/{Mathf.RoundToInt(maxScore)}";
 
         if (timer > difficultyIncreaseTime)
         {
             // 难度增加
-            spawnRate = Mathf.Max(spawnRate * 0.95f, maxSpawnRate);
+            diffRate *= 1.05f;
             currentXOffset = Mathf.Min(currentXOffset + 0.1f, maxXOffset);
+            UpdateData();
 
             // 重置计时器
             timer = 0;
@@ -141,7 +151,15 @@ public class ObstacleSpawner : MonoBehaviour
         nextSpawnTime = 0;
         spawnRate = 5f;
         currentXOffset = 0;
+        score = 0;
+        diffRate = 1;
+        UpdateData();
     }
 
+    void UpdateData()
+    {
+        speed = startSpeed * diffRate;
+        curSpawnRate = spawnRate / diffRate;
+    }
 
 }
