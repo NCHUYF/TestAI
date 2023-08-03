@@ -26,6 +26,7 @@ public class DebugItemBase : IDebugItem
     public Color Color { get; set; }
     public int FontSize { get; set; }
     public List<IDebugItem> Children { get; }
+    private static Dictionary<Color, Texture2D> colorBoxCache = new Dictionary<Color, Texture2D>(); // 缓存
 
     public DebugItemBase(string key, string displayName, Func<string> getter, Color color = default, int fontSize = 18)
     {
@@ -76,6 +77,10 @@ public class DebugItemBase : IDebugItem
     // 创建一个指定颜色的 Texture2D
     protected Texture2D CreateBox(int width, int height, Color col)
     {
+        // 检查是否已经存在该颜色的纹理
+        if (colorBoxCache.TryGetValue(col, out var texture))
+            return texture;
+
         var pix = new Color[width * height];
         for (int i = 0; i < pix.Length; i++)
             pix[i] = col;
@@ -84,6 +89,7 @@ public class DebugItemBase : IDebugItem
         result.SetPixels(pix);
         result.Apply();
 
+        colorBoxCache[col] = result; // 将新纹理添加到缓存中
         return result;
     }
 
@@ -142,7 +148,7 @@ public class DebugItemObject : DebugItemBase
 
         foreach (var field in fields)
         {
-            if (field.FieldType.BaseType == typeof(MulticastDelegate)) continue;  // 忽略委托类型
+            if (field.FieldType.BaseType == typeof(MulticastDelegate)) continue; // 忽略委托类型
             var value = field.GetValue(obj);
             if (value is IDictionary dic)
                 Children.Add(new DebugItemDictionary($"{field.Name}", dic, Color, FontSize));
@@ -155,7 +161,8 @@ public class DebugItemObject : DebugItemBase
         foreach (var property in properties)
         {
             if (!property.CanRead) continue;
-            if (property.PropertyType.BaseType == typeof(MulticastDelegate)) continue;  // 忽略委托类型
+            if (property.PropertyType.BaseType == typeof(MulticastDelegate)) continue; // 忽略委托类型
+            if (property.GetCustomAttribute<ObsoleteAttribute>() != null) continue; // 如果有弃用属性，跳过这个属性
             var value = property.GetValue(obj);
             if (value is IDictionary dic)
                 Children.Add(new DebugItemDictionary($"{property.Name}", dic, Color, FontSize));
