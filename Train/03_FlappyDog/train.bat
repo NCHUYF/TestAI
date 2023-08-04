@@ -5,6 +5,9 @@
 set ENV_NAME=ml-agents
 :: 默认训练ID
 set DEFAULT_ID=default_run
+:: 可执行环境的路径
+set EXEC_ENV_PATH=../../Output/TestAI.exe
+
 :: 用户配置区域结束
 
 :: 获取批处理文件的目录
@@ -121,12 +124,12 @@ exit /b
 :: ------------------------------------------------------------------------------
 if "%initialize_from_choice%"=="" (
     echo 开始新训练...
-    echo mlagents-learn config.yaml --run-id=%train_id%
-    mlagents-learn config.yaml --run-id=%train_id%
+    echo mlagents-learn config.yaml --run-id=%train_id% --env=%EXEC_ENV_PATH%
+    mlagents-learn config.yaml --run-id=%train_id% --env=%EXEC_ENV_PATH% 
 ) else (
     echo 开始新训练并从训练ID: %initialize_from_choice% 初始化...
-    echo mlagents-learn config.yaml --run-id=%train_id% --initialize-from=%initialize_from_choice%
-    mlagents-learn config.yaml --run-id=%train_id% --initialize-from=%initialize_from_choice%
+    echo mlagents-learn config.yaml --run-id=%train_id% --initialize-from=%initialize_from_choice% --env=%EXEC_ENV_PATH% 
+    mlagents-learn config.yaml --run-id=%train_id% --initialize-from=%initialize_from_choice% --env=%EXEC_ENV_PATH% 
 )
 exit /b
 
@@ -134,6 +137,7 @@ exit /b
 :: 继续训练
 :: ------------------------------------------------------------------------------
 echo 继续训练...
-echo mlagents-learn config.yaml --run-id=%train_id% --resume
-mlagents-learn config.yaml --run-id=%train_id% --resume
+echo mlagents-learn config.yaml --run-id=%train_id% --resume --env=%EXEC_ENV_PATH%
+mlagents-learn config.yaml --run-id=%train_id% --resume --env=%EXEC_ENV_PATH%
 exit /b
+
