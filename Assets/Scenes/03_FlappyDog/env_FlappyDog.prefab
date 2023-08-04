@@ -67,13 +67,8 @@ MonoBehaviour:
   ClipMinX: {fileID: 5807615059332241540}
   ClipMaxX: {fileID: 5807615058285874965}
   _scoreText: {fileID: 7660208278009301224}
-  startSpeed: 1
-  spawnRate: 5
-  difficultyIncreaseTime: 5
-  maxXOffset: 10
-  speed: 1
-  curSpawnRate: 0
   diffRate: 1
+  startDiffRate: 1
 --- !u!1 &189774975988558708
 GameObject:
   m_ObjectHideFlags: 0
@@ -223,7 +218,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_BrainParameters:
-    VectorObservationSize: 6
+    VectorObservationSize: 9
     NumStackedVectorObservations: 1
     VectorActionSize: 0300000003000000
     VectorActionDescriptions: []

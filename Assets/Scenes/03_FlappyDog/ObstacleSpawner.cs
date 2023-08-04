@@ -3,6 +3,12 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 
+public class Obstacle 
+{
+    public GameObject gameObject;
+    public Obstacle nextObstacle;
+}
+
 public class ObstacleSpawner : MonoBehaviour
 {
     public GameObject obstaclePrefab; // 障碍物预制体
@@ -13,24 +19,29 @@ public class ObstacleSpawner : MonoBehaviour
     public Transform ClipMinX; // X轴最小剪切范围
     public Transform ClipMaxX; // X轴最大剪切范围
     public TextMeshPro _scoreText; // 分数
-    public float startSpeed = 1f; // 障碍物移动速度
-    public float spawnRate = 5f; // 初始生成频率
-    public float difficultyIncreaseTime = 5; // 难度增加的时间间隔
-    public float maxXOffset = 10f; // 最大的X偏移量
+    private float spawnRate = 5f; // 初始生成频率
+    private float difficultyIncreaseTime = 5; // 难度增加的时间间隔
+    private float minXOffset = 0f; // 最的X偏移量
+    private float maxXOffset = 10f; // 最大的X偏移量
 
-    public float speed; // 障碍物移动速度
-    public float curSpawnRate; // 初始生成频率
-    private List<GameObject> obstacles; // 障碍物列表
+    private float startSpeed = 1f; // 障碍物移动速度
+    private float speed; // 障碍物移动速度
+    private float curSpawnRate; // 生成频率
+    private List<Obstacle> obstacles; // 障碍物列表
     private float nextSpawnTime = 0f; // 下次生成的时间
     private float timer = 0f; // 计时器
     private float score = 0f; // 分数
     private float currentXOffset; // 当前X偏移量
     private float maxScore = 0f;
+    [HideInInspector]
     public float diffRate = 1f; // 困难指数
-
+    [Range(1f, 5f)]
+    public float startDiffRate = 1f;
+    public readonly float minDiffRate = 1f;
+    public readonly float maxDiffRate = 5f;
     private void Start()
     {
-        obstacles = new List<GameObject>(); // 初始化列表
+        obstacles = new List<Obstacle>(); // 初始化列表
         Reset();
     }
 
@@ -65,7 +76,7 @@ public class ObstacleSpawner : MonoBehaviour
         if (obstacles.Count > 0)
         {
             randomX = Random.Range(startX.localPosition.x, endX.localPosition.x);
-            float lastX = obstacles[obstacles.Count - 1].transform.localPosition.x;
+            float lastX = obstacles[obstacles.Count - 1].gameObject.transform.localPosition.x;
             float offsetX = RandomSign() * currentXOffset;
             randomX = Mathf.Clamp(lastX + offsetX, startX.localPosition.x, endX.localPosition.x); // 限制范围
         }
@@ -99,7 +110,12 @@ public class ObstacleSpawner : MonoBehaviour
             lower.transform.SetParent(obstacle.transform, false); // 将新物体设置为障碍物的子对象
             Destroy(sub.gameObject);
         }
-        obstacles.Add(obstacle);
+        Obstacle ob = new Obstacle { nextObstacle = null, gameObject = obstacle };
+        if(obstacles.Count > 0)
+        {
+            obstacles[obstacles.Count - 1].nextObstacle = ob;
+        }
+        obstacles.Add(ob);
     }
 
     void MoveAndCheckObstacles()
@@ -107,7 +123,7 @@ public class ObstacleSpawner : MonoBehaviour
         // 移动障碍物
         for (int i = obstacles.Count - 1; i >= 0; i--)
         {
-            GameObject obstacle = obstacles[i];
+            GameObject obstacle = obstacles[i].gameObject;
             obstacle.transform.Translate(Vector3.back * speed * Time.deltaTime);
 
             // 如果达到endZ，销毁障碍物并从列表中移除
@@ -129,8 +145,7 @@ public class ObstacleSpawner : MonoBehaviour
         if (timer > difficultyIncreaseTime)
         {
             // 难度增加
-            diffRate *= 1.05f;
-            currentXOffset = Mathf.Min(currentXOffset + 0.1f, maxXOffset);
+            diffRate = Mathf.Clamp(diffRate * 1.05f, minDiffRate, maxDiffRate);
             UpdateData();
 
             // 重置计时器
@@ -141,18 +156,18 @@ public class ObstacleSpawner : MonoBehaviour
     public void Reset()
     {
         // 销毁所有障碍物并清空列表
-        foreach (GameObject obstacle in obstacles)
+        foreach (var obstacle in obstacles)
         {
-            Destroy(obstacle);
+            Destroy(obstacle.gameObject);
         }
         obstacles.Clear();
 
         timer = 0;
         nextSpawnTime = 0;
         spawnRate = 5f;
-        currentXOffset = 0;
+        currentXOffset = minXOffset;
         score = 0;
-        diffRate = 1;
+        diffRate = startDiffRate;
         UpdateData();
     }
 
@@ -160,6 +175,40 @@ public class ObstacleSpawner : MonoBehaviour
     {
         speed = startSpeed * diffRate;
         curSpawnRate = spawnRate / diffRate;
+        currentXOffset = MapValue(diffRate, minDiffRate, maxDiffRate, minXOffset, maxXOffset);
+    }
+
+    private float MapValue(float value, float inMin, float inMax, float outMin, float outMax)
+    {
+        return outMin + (value - inMin) * (outMax - outMin) / (inMax - inMin);
+    }
+
+    /// <summary>
+    /// 根据player的位置获取下一个障碍物的位置，障碍物是沿着z轴从大向小方向移动的
+    /// </summary>
+    /// <param name="playerPosition"></param>
+    /// <returns></returns>
+    public Vector3 GetNextPosition(Vector3 playerPosition)
+    {
+        float farthestZ = float.PositiveInfinity; // 初始化为正无穷，确保任何障碍物的Z值都小于它
+        Vector3 nextPosition = Vector3.zero; // 下一个障碍物的位置
+
+        // 遍历障碍物列表
+        foreach (Obstacle obstacle in obstacles)
+        {
+            Vector3 obstaclePosition = obstacle.gameObject.transform.localPosition;
+
+            // 如果障碍物位于玩家前方并且比当前找到的最远障碍物还要近
+            if (obstaclePosition.z > playerPosition.z && obstaclePosition.z < farthestZ)
+            {
+                farthestZ = obstaclePosition.z;
+                nextPosition = obstaclePosition; // 更新下一个障碍物的位置
+            }
+        }
+
+        // 在Scene视图中绘制nextPosition的位置
+        //Debug.DrawRay(nextPosition, Vector3.up * 5f, Color.red, 1f);
+        return nextPosition;
     }
 
 }

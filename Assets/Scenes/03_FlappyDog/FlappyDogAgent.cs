@@ -31,6 +31,9 @@ public class FlappyDogAgent : Agent
         sensor.AddObservation(_target.transform.localPosition.z);
         sensor.AddObservation(_timer);
         sensor.AddObservation(_spawner.diffRate);
+        sensor.AddObservation(nextPos.x);
+        sensor.AddObservation(nextPos.z);
+        sensor.AddObservation(disToNext);
     }
 
     /// <summary>
@@ -53,9 +56,12 @@ public class FlappyDogAgent : Agent
             ResetTarget();
         }
 
-        // 鼓励找目标
+        nextPos = _spawner.GetNextPosition(transform.localPosition);
+        disToNext = Vector3.Distance(nextPos, transform.localPosition);
+
+        // 鼓励找目标、前往下一个位置点
         // 时间奖励
-        AddReward(0.001f * (_timer - disToTarget));
+        AddReward(0.001f * (_timer - disToNext - disToTarget));
     }
 
     private void OnCollisionEnter(Collision collision)
@@ -141,4 +147,6 @@ public class FlappyDogAgent : Agent
     private Rigidbody _rigidbody;
     [SerializeField]
     private float _moveSpeed = 3;
+    private Vector3 nextPos;
+    private float disToNext;
 }
