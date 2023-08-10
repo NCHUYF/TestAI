@@ -19,12 +19,12 @@ public class ObstacleSpawner : MonoBehaviour
     public Transform ClipMinX; // X轴最小剪切范围
     public Transform ClipMaxX; // X轴最大剪切范围
     public TextMeshPro _scoreText; // 分数
-    private float spawnRate = 5f; // 初始生成频率
-    private float difficultyIncreaseTime = 5; // 难度增加的时间间隔
+    private float spawnRate = 10f; // 初始生成频率
+    private float difficultyIncreaseTime = 1; // 难度增加的时间间隔
     private float minXOffset = 0f; // 最的X偏移量
     private float maxXOffset = 10f; // 最大的X偏移量
 
-    private float startSpeed = 1f; // 障碍物移动速度
+    private float startSpeed = 0.5f; // 障碍物移动速度
     private float speed; // 障碍物移动速度
     private float curSpawnRate; // 生成频率
     private List<Obstacle> obstacles; // 障碍物列表
@@ -164,7 +164,6 @@ public class ObstacleSpawner : MonoBehaviour
 
         timer = 0;
         nextSpawnTime = 0;
-        spawnRate = 5f;
         currentXOffset = minXOffset;
         score = 0;
         diffRate = startDiffRate;

@@ -204,7 +204,7 @@ MonoBehaviour:
   _spawner: {fileID: 189774974775994834}
   _target: {fileID: 5664866854830658012}
   _timerText: {fileID: 3787827808006274376}
-  _moveSpeed: 3
+  _moveSpeed: 6
 --- !u!114 &189774975988558709
 MonoBehaviour:
   m_ObjectHideFlags: 0

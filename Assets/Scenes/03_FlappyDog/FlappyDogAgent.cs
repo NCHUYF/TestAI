@@ -46,7 +46,7 @@ public class FlappyDogAgent : Agent
         dir.x = vectorAction[0] - 1;
         dir.z = vectorAction[1] - 1;
 
-        _rigidbody.velocity = dir * _moveSpeed * _spawner.diffRate;
+        _rigidbody.velocity = dir * _moveSpeed;
 
         var disToTarget = Vector3.Distance(transform.localPosition, _target.transform.localPosition);
         // 吃掉目标
@@ -80,7 +80,6 @@ public class FlappyDogAgent : Agent
         if (collision.gameObject.CompareTag("Obstacle"))
         {
             AddReward(-1f);
-            EndEpisode();
         }
     }
 
@@ -146,7 +145,7 @@ public class FlappyDogAgent : Agent
     private float _timer = 20;
     private Rigidbody _rigidbody;
     [SerializeField]
-    private float _moveSpeed = 3;
+    private float _moveSpeed = 6;
     private Vector3 nextPos;
     private float disToNext;
 }
